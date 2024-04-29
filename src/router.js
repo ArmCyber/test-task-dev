@@ -1,5 +1,6 @@
 const {
   respondWith404NotFound,
+  respondWith405MethodNotAllowed,
 } = require('./httpHelpers');
 const { routerHandleResult } = require('./routerHandleResult');
 
@@ -10,7 +11,19 @@ const routers = [
 ];
 
 module.exports = function(request, response) {
-  if (routers[0].handle(request, response) !== routerHandleResult.HANDLED) {
+  let hasMethodNotAllowedResult = false;
+  for (const router of routers) {
+    const result = router.handle(request, response);
+    if (result === routerHandleResult.HANDLED) {
+      return;
+    } else if (result === routerHandleResult.NO_HTTP_METHOD_MATCH) {
+      hasMethodNotAllowedResult = true;
+    }
+  }
+
+  if (hasMethodNotAllowedResult) {
+    respondWith405MethodNotAllowed(response);
+  } else {
     respondWith404NotFound(response);
-  };
+  }
 };
